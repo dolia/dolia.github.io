@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="PHP实现插入排序算法"/>
+
+
+
+
+  <meta name="keywords" content="php,算法,排序," />
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="w3php">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.0.0" />
+
+
+
+<link rel="canonical" href="http://www.w3php.com/archives/algorithm-php-insertsort/"/>
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.0.0" />
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?24750768336da0680dfc6eee489e8b56";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+    <title> PHP实现插入排序算法 · w3php </title>
+  </head>
+
+  <body>
+    <div class="container">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">w3php</a>
+</div>
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/">
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/archives/">
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/tags">
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/categories">
+            分类
+          </a>
+        </li>
+      
+      
+        <li class="menu-search">
+          <form>
+            <i class="iconfont icon-search" id="open-search"></i>
+            <input type="text" class="search-input" id="search-input" />
+            <i class="iconfont icon-close" id="close-search"></i>
+          </form>
+        </li>
+      
+    </ul>
+  
+</nav>
+
+<div class="mobile-navbar">
+  <div class="mobile-header">
+    <div class="mobile-header-logo">
+      <a href="/." class="logo">w3php</a>
+    </div>
+
+    <div class="mobile-header-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+  <nav class="mobile-menu">
+    
+      
+      <a class="mobile-menu-item" href="/">
+        首页
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/archives/">
+        归档
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/tags">
+        标签
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/categories">
+        分类
+      </a>
+    
+  </nav>
+</div>
+      </header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content">
+            
+  
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          PHP实现插入排序算法
+        
+      </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2012年7月13日
+        </span>
+      </div>
+    </header>
+
+    
+
+    <div class="post-content">
+      
+        <p>对于一个数组A[0..n-1]的排序，我们有很多方法可以实现，这次我们使用<strong>插入排序</strong>来实现一下。 </p>
+<p>为了能更好的理解插入排序，我们举一个例子。比如军训时候，教官要把所有的同学按照身高排成一列走正步。这时候，教官可以这么做：</p>
+<blockquote>
+<ol>
+<li>教官先随便挑出来一个同学站到操场中间，让其他同学则等在操场边上等待入队。</li>
+<li>教官命令一位等待的同学进入队列，让入该同学自己主动跟已经排好的队列中的同学进行对比身高，对比过后，找到比自己高的同学，站在TA的身后。</li>
+<li>教官重复步骤2，直至所有同学都进入队伍。</li>
+</ol>
+</blockquote>
+<p>这样整体下来，队伍就会按照顺序排列下来。</p>
+<p>对于等待入队的同学来说，他所要做的是，逐一对比已经在队伍中的同学身高，挑比自己高的同学站在后面，也就是插入比自己高，比自己低的同学的队伍中。</p>
+<p>代码如下：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">$numbers = [<span class="number">2</span>,<span class="number">34</span>,<span class="number">1123</span>,<span class="number">6</span>,<span class="number">334</span>,<span class="number">223</span>,<span class="number">34</span>,<span class="number">442</span>,<span class="number">949</span>];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">insertSort</span><span class="params">($numbers)</span></span>&#123;</div><div class="line"></div><div class="line">    $length = count($numbers);</div><div class="line">    <span class="keyword">for</span> ($i=<span class="number">0</span>;$i&lt;$length;$i++)&#123;</div><div class="line">        $j = $i;</div><div class="line">        $key = $numbers[$i];</div><div class="line">        <span class="keyword">while</span>($j&gt;<span class="number">0</span>&amp;&amp;$numbers[$j<span class="number">-1</span>]&gt;$key)&#123;</div><div class="line">            $numbers[$j] = $numbers[$j<span class="number">-1</span>];</div><div class="line">            $j--;</div><div class="line">        &#125;</div><div class="line">        $numbers[$j]=$key;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> $numbers;</div><div class="line">&#125;</div><div class="line"></div><div class="line">print_r(insertSort($numbers));</div></pre></td></tr></table></figure>
+<p>最终输出结果</p>
+<blockquote>
+<p>Array<br>(<br>    [0] =&gt; 2<br>    [1] =&gt; 6<br>    [2] =&gt; 34<br>    [3] =&gt; 34<br>    [4] =&gt; 223<br>    [5] =&gt; 334<br>    [6] =&gt; 442<br>    [7] =&gt; 949<br>    [8] =&gt; 1123<br>)</p>
+</blockquote>
+
+      
+    </div>
+
+    
+      <footer class="post-footer">
+        <div class="post-tags">
+          
+            <a href="/tags/php/">php</a>
+          
+            <a href="/tags/算法/">算法</a>
+          
+            <a href="/tags/排序/">排序</a>
+          
+        </div>
+
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/archives/algorithm-php-bubble-sort/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">PHP实现冒泡排序</span>
+        <span class="prev-text nav-mobile">上一篇</span>
+      </a>
+    
+    
+  </nav>
+
+      </footer>
+    
+  </article>
+
+
+          </div>
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="archives/algorithm-php-insertsort/"
+           data-title="PHP实现插入排序算法" data-url="http://www.w3php.com/archives/algorithm-php-insertsort/">
+      </div>
+    
+  </div>
+
+        </div>  
+      </main>
+
+      <footer id="footer" class="footer">
+  <div class="social-links">
+    
+      
+        
+          <a href="mailto:your@email.com" class="iconfont icon-email" title="email"></a>
+        
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+    
+    
+  </div>
+
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://hexo.io/">Hexo</a> 强力驱动
+  </span>
+  
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">
+    
+    &copy; 
+     
+      2015 - 
+    
+    2016
+
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Dolia</span>
+  </span>
+</div>
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"w3php"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+
+
+    
+
+
+  <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+
+    <script type="text/javascript" src="/js/src/even.js?v=2.0.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.0.0"></script>
+
+  </body>
+</html>

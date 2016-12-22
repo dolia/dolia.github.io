@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="使用PHP递归调用实现经典游戏汉诺塔"/>
+
+
+
+
+  <meta name="keywords" content="php,算法,排序," />
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="w3php">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.0.0" />
+
+
+
+<link rel="canonical" href="http://www.w3php.com/archives/algorithm-php-hanoi/"/>
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.0.0" />
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?24750768336da0680dfc6eee489e8b56";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+    <title> 使用PHP递归调用实现经典游戏汉诺塔 · w3php </title>
+  </head>
+
+  <body>
+    <div class="container">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">w3php</a>
+</div>
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/">
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/archives/">
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/tags">
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/categories">
+            分类
+          </a>
+        </li>
+      
+      
+        <li class="menu-search">
+          <form>
+            <i class="iconfont icon-search" id="open-search"></i>
+            <input type="text" class="search-input" id="search-input" />
+            <i class="iconfont icon-close" id="close-search"></i>
+          </form>
+        </li>
+      
+    </ul>
+  
+</nav>
+
+<div class="mobile-navbar">
+  <div class="mobile-header">
+    <div class="mobile-header-logo">
+      <a href="/." class="logo">w3php</a>
+    </div>
+
+    <div class="mobile-header-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+  <nav class="mobile-menu">
+    
+      
+      <a class="mobile-menu-item" href="/">
+        首页
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/archives/">
+        归档
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/tags">
+        标签
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/categories">
+        分类
+      </a>
+    
+  </nav>
+</div>
+      </header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content">
+            
+  
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          使用PHP递归调用实现经典游戏汉诺塔
+        
+      </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2014年12月10日
+        </span>
+      </div>
+    </header>
+
+    
+      <div class="post-toc" id="post-toc">
+        <h2 class="post-toc-title">文章目录</h2>
+        <div class="post-toc-content">
+          <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#简介"><span class="toc-text">简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#问题描述"><span class="toc-text">问题描述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#问题分析"><span class="toc-text">问题分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PHP代码实现"><span class="toc-text">PHP代码实现</span></a></li></ol>
+        </div>
+      </div>
+    
+
+    <div class="post-content">
+      
+        <h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>汉诺塔：汉诺塔（又称河内塔）问题是源于印度一个古老传说的益智玩具。大梵天创造世界的时候做了三根金刚石柱子，在一根柱子上从下往上按照大小顺序摞着64片黄金圆盘。大梵天命令婆罗门把圆盘从下面开始按大小顺序重新摆放在另一根柱子上。并且规定，在小圆盘上不能放大圆盘，在三根柱子之间一次只能移动一个圆盘。</p>
+<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p><img src="http://dl2.iteye.com/upload/attachment/0097/9034/e384727a-a7fb-3f75-a99d-2f3bf9b229a7.jpeg" alt="汉诺塔"><br>有三根相邻的柱子，标号为A,B,C，A柱子上从下到上按金字塔状叠放着n个不同大小的圆盘，要把所有盘子一个一个移动到柱子B上，并且每次移动同一根柱子上都不能出现大盘子在小盘子上方。</p>
+<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><ol>
+<li><p>当只有一个盘子的时候，只需要从将A塔上的一个盘子移到C塔上。</p>
+</li>
+<li><p>当A塔上有两个盘子是，先将A塔上的1号盘子（编号从上到下）移动到B塔上，再将A塔上的2号盘子移动的C塔上，最后将B塔上的小盘子移动到C塔上。</p>
+</li>
+<li><p>当A塔上有3个盘子时，先将A塔上编号1至2的盘子（共2个）移动到B塔上（需借助C塔），然后将A塔上的3号最大的盘子移动到C塔，最后将B塔上的两个盘子借助A塔移动到C塔上。</p>
+</li>
+<li><p>当A塔上有n个盘子是，先将A塔上编号1至n-1的盘子（共n-1个）移动到B塔上（借助C塔），然后将A塔上最大的n号盘子移动到C塔上，最后将B塔上的n-1个盘子借助A塔移动到C塔上。</p>
+</li>
+</ol>
+<p>综上所述，除了只有一个盘子时不需要借助其他塔外，其余情况均一样（只是事件的复杂程度不一样）。</p>
+<h2 id="PHP代码实现"><a href="#PHP代码实现" class="headerlink" title="PHP代码实现"></a>PHP代码实现</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">hanoiTwoer</span><span class="params">($n,$a,$b,$c)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">if</span>($n==<span class="number">1</span>)&#123;</div><div class="line"></div><div class="line">        move(<span class="number">1</span>,$a,$c);</div><div class="line"></div><div class="line">    &#125;<span class="keyword">else</span>&#123;</div><div class="line"></div><div class="line">        hanoiTwoer($n<span class="number">-1</span>,$a,$c,$b);</div><div class="line"></div><div class="line">        move($n,$a,$c);</div><div class="line"></div><div class="line">        hanoiTwoer($n<span class="number">-1</span>,$b,$a,$c);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">move</span><span class="params">($n,$from,$to)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">echo</span><span class="string">'移动 盘子'</span>.$n.<span class="string">'从 '</span>.$from.<span class="string">'到'</span>.$to.<span class="string">"\n"</span>;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">hanoiTwoer(<span class="number">10</span>,<span class="string">'A'</span>,<span class="string">'B'</span>,<span class="string">'C'</span>);</div></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+      <footer class="post-footer">
+        <div class="post-tags">
+          
+            <a href="/tags/php/">php</a>
+          
+            <a href="/tags/算法/">算法</a>
+          
+            <a href="/tags/排序/">排序</a>
+          
+        </div>
+
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/archives/algorithm-php-selection-sort/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">PHP实现选择排序</span>
+        <span class="prev-text nav-mobile">上一篇</span>
+      </a>
+    
+    
+      <a class="next" href="/archives/algorithm-php-fibonacci/">
+        <span class="next-text nav-default">PHP使用递归实现斐波那契数列</span>
+        <span class="prev-text nav-mobile">下一篇</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+      </footer>
+    
+  </article>
+
+
+          </div>
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="archives/algorithm-php-hanoi/"
+           data-title="使用PHP递归调用实现经典游戏汉诺塔" data-url="http://www.w3php.com/archives/algorithm-php-hanoi/">
+      </div>
+    
+  </div>
+
+        </div>  
+      </main>
+
+      <footer id="footer" class="footer">
+  <div class="social-links">
+    
+      
+        
+          <a href="mailto:your@email.com" class="iconfont icon-email" title="email"></a>
+        
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+    
+    
+  </div>
+
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://hexo.io/">Hexo</a> 强力驱动
+  </span>
+  
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">
+    
+    &copy; 
+     
+      2015 - 
+    
+    2016
+
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Dolia</span>
+  </span>
+</div>
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"w3php"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+
+
+    
+
+
+  <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+
+    <script type="text/javascript" src="/js/src/even.js?v=2.0.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.0.0"></script>
+
+  </body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="PHP使用递归实现斐波那契数列"/>
+
+
+
+
+  <meta name="keywords" content="php,算法," />
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="w3php">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.0.0" />
+
+
+
+<link rel="canonical" href="http://www.w3php.com/archives/algorithm-php-fibonacci/"/>
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.0.0" />
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?24750768336da0680dfc6eee489e8b56";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+    <title> PHP使用递归实现斐波那契数列 · w3php </title>
+  </head>
+
+  <body>
+    <div class="container">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">w3php</a>
+</div>
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/">
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/archives/">
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/tags">
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/categories">
+            分类
+          </a>
+        </li>
+      
+      
+        <li class="menu-search">
+          <form>
+            <i class="iconfont icon-search" id="open-search"></i>
+            <input type="text" class="search-input" id="search-input" />
+            <i class="iconfont icon-close" id="close-search"></i>
+          </form>
+        </li>
+      
+    </ul>
+  
+</nav>
+
+<div class="mobile-navbar">
+  <div class="mobile-header">
+    <div class="mobile-header-logo">
+      <a href="/." class="logo">w3php</a>
+    </div>
+
+    <div class="mobile-header-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+  <nav class="mobile-menu">
+    
+      
+      <a class="mobile-menu-item" href="/">
+        首页
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/archives/">
+        归档
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/tags">
+        标签
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/categories">
+        分类
+      </a>
+    
+  </nav>
+</div>
+      </header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content">
+            
+  
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          PHP使用递归实现斐波那契数列
+        
+      </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2014年8月12日
+        </span>
+      </div>
+    </header>
+
+    
+      <div class="post-toc" id="post-toc">
+        <h2 class="post-toc-title">文章目录</h2>
+        <div class="post-toc-content">
+          <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#引言"><span class="toc-text">引言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#定义"><span class="toc-text">定义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#递推公式"><span class="toc-text">递推公式</span></a></li></ol>
+        </div>
+      </div>
+    
+
+    <div class="post-content">
+      
+        <h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>斐波那契数列又因数学家列昂纳多·斐波那契以兔子繁殖为例子而引入，故又称为“兔子数列”。</p>
+<blockquote>
+<p>一般而言，兔子在出生两个月后，就有繁殖能力，一对兔子每个月能生出一对小兔子来。如果所有兔子都不死，那么一年以后可以繁殖多少对兔子？</p>
+</blockquote>
+<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p><strong>斐波那契数列</strong> 指的是这样一个数列 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233，377，610，987，1597，2584，4181，6765，10946，17711，28657，46368……..</p>
+<p>这个数列从第3项开始，每一项都等于前两项之和。</p>
+<h2 id="递推公式"><a href="#递推公式" class="headerlink" title="递推公式"></a>递推公式</h2><p>斐波那契数列：1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, …<br>如果设F(n）为该数列的第n项（n∈N*），那么这句话可以写成如下形式：:F(n)=F(n-1)+F(n-2)<br>显然这是一个线性递推数列。</p>
+<p><img src="http://chuantu.biz/t5/44/1481099435x1973338723.gif" alt="示意图"></p>
+<p>下面我们使用PHP来是解决引言中提到的一年后可以繁殖多少兔子的问题。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">fibonacci</span><span class="params">($n)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> ($n&lt;=<span class="number">2</span>)&#123;</div><div class="line">        <span class="keyword">return</span> <span class="number">1</span>;</div><div class="line"></div><div class="line">    &#125;<span class="keyword">else</span>&#123;</div><div class="line">        <span class="keyword">return</span> fibonacci($n<span class="number">-1</span>)+fibonacci($n<span class="number">-2</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">echo</span> fibonacci(<span class="number">12</span>);</div><div class="line"></div><div class="line"><span class="comment">//输出 144</span></div></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+      <footer class="post-footer">
+        <div class="post-tags">
+          
+            <a href="/tags/php/">php</a>
+          
+            <a href="/tags/算法/">算法</a>
+          
+        </div>
+
+        
+  <nav class="post-nav">
+    
+      <a class="prev" href="/archives/algorithm-php-hanoi/">
+        <i class="iconfont icon-left"></i>
+        <span class="prev-text nav-default">使用PHP递归调用实现经典游戏汉诺塔</span>
+        <span class="prev-text nav-mobile">上一篇</span>
+      </a>
+    
+    
+      <a class="next" href="/archives/algorithm-php-bubble-sort/">
+        <span class="next-text nav-default">PHP实现冒泡排序</span>
+        <span class="prev-text nav-mobile">下一篇</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+      </footer>
+    
+  </article>
+
+
+          </div>
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="archives/algorithm-php-fibonacci/"
+           data-title="PHP使用递归实现斐波那契数列" data-url="http://www.w3php.com/archives/algorithm-php-fibonacci/">
+      </div>
+    
+  </div>
+
+        </div>  
+      </main>
+
+      <footer id="footer" class="footer">
+  <div class="social-links">
+    
+      
+        
+          <a href="mailto:your@email.com" class="iconfont icon-email" title="email"></a>
+        
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+    
+    
+  </div>
+
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://hexo.io/">Hexo</a> 强力驱动
+  </span>
+  
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">
+    
+    &copy; 
+     
+      2015 - 
+    
+    2016
+
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Dolia</span>
+  </span>
+</div>
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"w3php"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+
+
+    
+
+
+  <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+
+    <script type="text/javascript" src="/js/src/even.js?v=2.0.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.0.0"></script>
+
+  </body>
+</html>

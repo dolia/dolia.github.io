@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>w3php</title>
+  <subtitle>专注PHP与WEB开发</subtitle>
+  <link href="/atom.xml" rel="self"/>
+  
+  <link href="http://www.w3php.com/"/>
+  <updated>2016-12-22T01:07:34.000Z</updated>
+  <id>http://www.w3php.com/</id>
+  
+  <author>
+    <name>Dolia</name>
+    
+  </author>
+  
+  <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>高可用可伸缩架构实用经验谈</title>
+    <link href="http://www.w3php.com/archives/server-high-performance/"/>
+    <id>http://www.w3php.com/archives/server-high-performance/</id>
+    <published>2016-08-12T14:49:12.000Z</published>
+    <updated>2016-12-22T01:07:34.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>本文转自 <a href="http://blog.qiniu.com/archives/1956" title="七牛" target="_blank" rel="external">【七牛李道斌】</a> </p>
+<p>移动互联网、云计算和大数据的成熟和发展，让更多的好想法得以在很短的时间内实现为产品。此时，如果用户需求抓得准，用户数量将很可能获得爆发式增长，而不需要像以往一样需要精心运营几年的时间。然而用户数量的快速增长（尤其是短时间内的爆发式增长），通常会让应用开发者有些吃不消，不得不面临一些严峻的技术挑战：如何避免因为单台机器当机导致服务不可用；如何避免在服务容量不足时，用户体验下降，等等。在系统构建之初就采用高可用和可伸缩架构，将能有效避免这些问题。</p>
+<p>如何构建高可用可和可伸缩架构呢？七牛云存储首席架构师李道兵在3月22的「开发者最佳实践日」第十期沙龙活动上给出了自己的想法。他结合自己多年的实践经验，针对一些不太复杂的业务场景，从入口层、业务层、缓存层和数据库层四个层面细致讲述了如何构建高可用和可伸缩系统。希望大家读完这篇文章，能觉得高可用和可伸缩不是一个高不可攀的东西，投入不高的成本就能在项目早期把高可用和可伸缩纳入架构设计之中。</p>
+<h2 id="如何实现高可用"><a href="#如何实现高可用" class="headerlink" title="如何实现高可用"></a>如何实现高可用</h2><h3 id="入口层"><a href="#入口层" class="headerlink" title="入口层"></a>入口层</h3><p>入口层，通常指Nginx和Apache等层面的东西，负责应用（不管是Web应用还是移动应用）的服务入口。我们通常会将服务定位在一个IP，如果这个IP对应的服务器当机了，那么用户的访问肯定会中断。此时，可以用Keepalived来实现入口层的高可用。例如，机器A 的IP是 1.2.3.4，机器 B 的 IP 是 1.2.3.5, 那么再申请一个 IP 1.2.3.6（称为⼼跳IP）, 平时绑定在机器A上,如果A当机，IP会自动绑定在机器B上；如果B当机，IP会自动绑定在机器A上。对于这种形式，我们将DNS绑定到心跳IP上，即可实现入口层的高可用。</p>
+<p>但这个方案有一点小问题。第一，它的切换可能会有一到两秒的中断，也就是说，如果不是要求到非常严格的毫秒级就不会有问题。第二，对入口的机器会有些浪费，因为买了两台机器的入口，可能就只有一台机器用上。对一些长连接的应用可能会导致服务中断，这时候就需要客户端做配合做一些重新创建连接的工作。简单来说，对于比较普通的业务来说，这个方案就能解决一部分问题。</p>
+<p>这里要注意，Keepalived在使用上会有一些限制。</p>
+<p>两台机器必须在同一个网段，不是在同一个网段，没有办法实现互相抢IP。</p>
+<p>内网服务也可以做心跳，但需要注意的是，以前为了安全我们会把内网服务绑定在内网IP上，避免出现安全问题。但为了使用keepalived，必须监听在所有IP上（如果监听在心跳IP上，那么机器没有持有该IP时，服务无法启动），简单的方案是启用 iptables, 避免内网服务被外网访问。</p>
+<p>服务器利用率下降，这时可以考虑做混合部署来改善这一点。</p>
+<p>比较常见的一个错误时，如果有两台机器，两个公网IP，DNS上把域名同时定位到两个IP，就觉得已经做了高可用了。这完全不是高可用，因为如果一台机器当机,那么就有一半左右的用户无法访问。</p>
+<h3 id="业务层"><a href="#业务层" class="headerlink" title="业务层"></a>业务层</h3><p>业务层通常是由PHP、Java、Python、Go等写的逻辑代码构成的，需要依赖于后台数据库及一些缓存层面的东西。如何实现业务层的高可用呢？最核心的就是，业务层不要有状态,将状态分散到缓存层和数据库。目前大家通常喜欢将以下几种数据放入业务层。</p>
+<p>第一个是session，即用户登录相关的数据，但好的做法是将session放在数据库里，或者一个比较稳定的缓存系统中。</p>
+<p>第二个是缓存，在访问数据库时，如果一个查询很慢，就希望将这些结果暂时放到进程里，下次再做查询时就不用再访问数据库了。这种做法带来的问题是，当业务层服务器不只一台时，数据很难做到一致，从缓存拿到的数据就可能是错误的。</p>
+<p>一个简单的原则就是业务层不要有状态。在业务层没有状态时，一台业务层服务器当掉了之后，Nginx/Apache会自动将所有的请求打到另外一台业务层的服务器上。由于没有状态，两台服务器没有任何差异，所以用户完全感受不到。如果把session放在业务层里面的话，那么面临的问题是，这个用户以前是登录在一台机器上的，这个进程死掉后，用户就会被登出了。</p>
+<p>友情提醒：有一段时间比较流行cookie session，就是将session中的数据加密之后放在客户的cookie里，然后下发到客户端，这样也能做到与服务端完全无状态。但这里面有很多坑，如果能绕过这些坑就可以这样使用。第一个坑是怎么保证加密的密钥不泄露，一旦泄露就意味着攻击者可以伪造任何人的身份。第二个坑是重放攻击，如何避免别人通过保存 cookie 去不停地尝试的验证码，当然也还有其他一些攻击手段。如果没有好办法解决这两方面的问题，那么cookie session尽量慎用。最好是将session放在一个性能比较好的数据库中。如果数据库性能不行，那么将session放在缓存中也比放在cookie里要好一点。</p>
+<p>缓存层</p>
+<p>非常简单的架构里是没有缓存这个概念的。但在访问量上来之后，MySQL之类的数据库扛不住了，比如在SATA盘里跑MySQL，QPS到达200、300甚至500时，MySQL的性能会大幅下降，这时就可以考虑用缓存层来挡住绝大部分服务请求，提升系统整体的容量。</p>
+<p>缓存层做高可用一个简单的方法就是，将缓存层分得细一点儿。比如说，缓存层就一台机器的话，那么这台机器当了以后，所有应用层的压力就会往数据库里压，数据库扛不住的话，整个网站（或应用）就会随之当掉。而如果缓存层分在四台机器上的话，每台只有四分之一，这台机器当掉了以后，也只有总访问量的四分之一会压在数据库上面，数据库能扛住的话，网站就能很稳定地等到缓存层重新起来。在实践中，四分之一显然是不够的，我们会将它分得更细，以保证单台缓存当机后数据库还能撑得住即可。在中小规模下，缓存层和业务层可以混合部署,这样可以节省机器。</p>
+<p>数据库层</p>
+<p>在数据库层面实现高可用，通常是在软件层面来做。例如，MySQL有主从模式(Master-Slave)，还有主主模式(Master-Master)都能满足需求。</p>
+<p>MongoDB也有ReplicaSet的概念,基本都能满足大家的需求。</p>
+<p>总之，要想实现高可用，需要做到这几点：入口层做心跳，业务层服务器无状态，缓存层减小粒度，数据库做一个主从模式。对于这种模式来讲，我们做的高可用不需要太多服务器，这些东西都可以同时部署在两台服务器上。这时，两台服务器就能满足早期的高可用需求了。任何一台服务器当机用户完全无感知。</p>
+<p>如何实现可伸缩</p>
+<p>入口层</p>
+<p>在入口层实现伸缩性，可以通过直接水平扩机器，然后DNS加IP来实现。但需要注意，尽管一个域名解析到几十个IP没有问题,但是很多浏览器客户端只会使用前几个IP,部分域名供应商对此有优化(如每次返回的IP顺序随机),但这个优化效果不稳定。</p>
+<p>推荐的做法是使用少量的Nginx机器作为入口,业务服务器隐藏在内网(HTTP类型的业务这种方式居多)。另外,也可以把所有IP下发到客户端，然后在客户端做一些调度(特别是非HTTP型的业务,如游戏、直播)。</p>
+<p>业务层</p>
+<p>业务层的伸缩性如何实现?与做高可用时的解决方案一样,要实现业务层的伸缩性，保证无状态是很好的手段。此外，加机器继续水平部署即可。</p>
+<p>缓存层</p>
+<p>比较麻烦的是缓存层的伸缩性，最简单粗暴的方式是什么呢？趁着半夜量比较低的时候，把整个缓存层全部下线，然后上线新的缓存层。新的缓存层启动起来之后，再等这些缓存慢慢预热。当然这里一个要求，你的数据库能抗住低估期的请求量。如果扛不住呢？取决于缓存类型，下面我们先可以将缓存的类型区分一下。</p>
+<p>强一致性缓存：无法接受从缓存拿到错误的数据 (比如用户余额，或者会被下游继续缓存这种情形)。</p>
+<p>弱一致性缓存：能接受在一段时间内从缓存拿到错误的数据 (比如微博的转发数)。</p>
+<p>不变型缓存：缓存key对应的value不会变更 (比如从SHA1推出来的密码, 或者其他复杂公式的计算结果)。</p>
+<p>那什么缓存类型伸缩性比较好呢？弱一致性和不变型缓存的扩容很方便,用一致性Hash即可；强一致性情况稍微复杂一些，稍后再讲。使用一致性Hash，而不用简单Hash的原因是缓存的失效率。如果缓存从9台扩容到10台,简单Hash 情况下90%的缓存会马上失效,而如果使用一致性Hash情况,只有10%的缓存会失效。</p>
+<p>那么，强一致性缓存会有什么问题？第一个问题是，缓存客户端的配置更新时间会有微小的差异,在这个时间窗内有可能会拿到过期的数据。第二个问题是，如果扩容之后再裁撤节点,会拿到脏数据。比如 a 这个key之前在机器1，扩容后在机器2，数据更新了，但裁撤节点后key回到机器1，这时候就会拿到脏数据。</p>
+<p>要解决问题2比较简单，要么保持永不减少节点,要么节点调整间隔大于数据的有效时间。问题1可以用如下的步骤来解决：</p>
+<ol>
+<li>两套hash配置都更新到客户端，但仍然使用旧配置；</li>
+</ol>
+<ol>
+<li>逐个客户端改为只有两套hash结果一致的情况下会使用缓存，其余情况从数据库读，但写入缓存；</li>
+</ol>
+<ol>
+<li>逐个客户端通知使用新配置。</li>
+</ol>
+<p>Memcache 设计得比较早，导致在伸缩性高可用方面的考虑得不太周到。Redis在这方面有不少改进，特别是 @ngaut 团队基于 redis开发了 codis 这个软件，一次性地解决了缓存层的绝大部分问题。推荐大家考察一下。</p>
+<p>数据库</p>
+<p>在数据库层面实现伸缩，方法很多，文档也很多，此处不做过多赘述。大致方法为：水平拆分、垂直拆分和定期滚动。</p>
+<p>总之，我们可以在入口层、业务层面、缓存层和数据库层四个层面，使用刚才介绍的方法和技术实现系统高可用和可伸缩性。具体为：在入口层用心跳来做到高可用，用平行部署来伸缩；在业务层做到服务无状态；在缓存层，可以减小一些粒度，以方便实现高可用，使用一致性Hash将有助于实现缓存层的伸缩性；数据库层的主从模式能解决高可用问题，拆分和滚动能解决可伸缩问题。</p>
+<p><img src="http://7j1ynv.com5.z0.glb.qiniucdn.com/wp-content/uploads/2015/03/EAD86F4B-D818-4D46-A4F8-F802765B3BEA.jpg" alt=""></p>
+<p>本文中分享的这些技巧和方法，主要想帮助不太复杂的业务场景或者中小型应用快速搭建起高可用可伸缩的系统。关于如何构建高可用和可伸缩系统还有很多更为细节的点和实践经验值得探讨，望以后能与大家做更充分的交流。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;本文转自 &lt;a href=&quot;http://blog.qiniu.com/archives/1956&quot; title=&quot;七牛&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;【七牛李道斌】&lt;/a&gt; &lt;/p&gt;
+&lt;p&gt;移动互联网、云计算和大数据的成熟和发展，让更多的
+    
+    </summary>
+    
+      <category term="server" scheme="http://www.w3php.com/categories/server/"/>
+    
+    
+      <category term="server" scheme="http://www.w3php.com/tags/server/"/>
+    
+      <category term="优化" scheme="http://www.w3php.com/tags/%E4%BC%98%E5%8C%96/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>PHP实现快速排序</title>
+    <link href="http://www.w3php.com/archives/algorithm-php-quicksort/"/>
+    <id>http://www.w3php.com/archives/algorithm-php-quicksort/</id>
+    <published>2015-12-12T14:49:12.000Z</published>
+    <updated>2016-12-21T08:59:54.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="算法简介"><a href="#算法简介" class="headerlink" title="算法简介"></a>算法简介</h2><p>快速排序（Quicksort）是对冒泡排序的一种改进。</p>
+<p>快速排序由C. A. R. Hoare在1962年提出。它的基本思想是：通过一趟排序将要排序的数据分割成独立的两部分，其中一部分的所有数据都比另外一部分的所有数据都要小，然后再按此方法对这两部分数据分别进行快速排序，整个排序过程可以递归进行，以此达到整个数据变成有序序列。</p>
+<p><img src="https://dn-linuxcn.qbox.me/data/attachment/album/201305/03/161701jmbrs6wkrgnzb6jc.gif" alt="视觉感受"></p>
+<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><p>设要排序的数组是A[0]……A[N-1]，首先任意选取一个数据（通常选用数组的第一个数）作为关键数据，然后将所有比它小的数都放到它前面，所有比它大的数都放到它后面，这个过程称为一趟快速排序。值得注意的是，快速排序不是一种稳定的排序算法，也就是说，多个相同的值的相对位置也许会在算法结束时产生变动。</p>
+<h2 id="操作方法"><a href="#操作方法" class="headerlink" title="操作方法"></a>操作方法</h2><p>一趟快速排序的算法是：</p>
+<ol>
+<li>设置两个变量i、j，排序开始的时候：i=0，j=N-1；</li>
+<li>以第一个数组元素作为关键数据，赋值给key，即key=A[0]；</li>
+<li>从j开始向前搜索，即由后开始向前搜索(j–)，找到第一个小于key的值A[j]，将A[j]和A[i]互换；</li>
+<li>从i开始向后搜索，即由前开始向后搜索(i++)，找到第一个大于key的A[i]，将A[i]和A[j]互换；</li>
+<li>重复第3、4步，直到i=j； (3,4步中，没找到符合条件的值，即3中A[j]不小于key,4中A[i]不大于key的时候改变j、i的值，使得j=j-1，i=i+1，直至找到为止。找到符合条件的值，进行交换的时候i， j指针位置不变。另外，i==j这一过程一定正好是i+或j-完成的时候，此时令循环结束）。</li>
+</ol>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div><div class="line">$numbers = [<span class="number">2</span>,<span class="number">34</span>,<span class="number">1123</span>,<span class="number">6</span>,<span class="number">334</span>,<span class="number">223</span>,<span class="number">34</span>,<span class="number">442</span>,<span class="number">949</span>];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">quickSort</span><span class="params">($numbers)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (!is_array($numbers)) <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line"></div><div class="line">    $length = count($numbers);</div><div class="line"></div><div class="line">    <span class="keyword">if</span> ($length&lt;=<span class="number">1</span>) <span class="keyword">return</span> $numbers;</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">    $leftArr = $rightArr = [];</div><div class="line"></div><div class="line">    <span class="keyword">for</span> ($i=<span class="number">1</span>;$i&lt;$length;$i++)&#123;</div><div class="line"></div><div class="line">        <span class="keyword">if</span> ($numbers[$i]&lt;$numbers[<span class="number">0</span>])&#123;</div><div class="line"></div><div class="line"></div><div class="line">            $leftArr[] = $numbers[$i];</div><div class="line">        &#125;<span class="keyword">else</span>&#123;</div><div class="line">            $rightArr[] = $numbers[$i];</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    $leftArr = quickSort($leftArr);</div><div class="line"></div><div class="line">    $rightArr = quickSort($rightArr);</div><div class="line"></div><div class="line"></div><div class="line">    <span class="keyword">return</span> array_merge($leftArr,[$numbers[<span class="number">0</span>]],$rightArr);</div><div class="line"></div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">print_r(quickSort($numbers));</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> *</div><div class="line"> * 输出</div><div class="line"> * Array</div><div class="line">(</div><div class="line">[0] =&gt; 2</div><div class="line">[1] =&gt; 6</div><div class="line">[2] =&gt; 34</div><div class="line">[3] =&gt; 34</div><div class="line">[4] =&gt; 223</div><div class="line">[5] =&gt; 334</div><div class="line">[6] =&gt; 442</div><div class="line">[7] =&gt; 949</div><div class="line">[8] =&gt; 1123</div><div class="line">)</div><div class="line"></div><div class="line"> *</div><div class="line"> */</div></pre></td></tr></table></figure>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;算法简介&quot;&gt;&lt;a href=&quot;#算法简介&quot; class=&quot;headerlink&quot; title=&quot;算法简介&quot;&gt;&lt;/a&gt;算法简介&lt;/h2&gt;&lt;p&gt;快速排序（Quicksort）是对冒泡排序的一种改进。&lt;/p&gt;
+&lt;p&gt;快速排序由C. A. R. Hoare在1962年提出
+    
+    </summary>
+    
+      <category term="php" scheme="http://www.w3php.com/categories/php/"/>
+    
+    
+      <category term="php" scheme="http://www.w3php.com/tags/php/"/>
+    
+      <category term="算法" scheme="http://www.w3php.com/tags/%E7%AE%97%E6%B3%95/"/>
+    
+      <category term="排序" scheme="http://www.w3php.com/tags/%E6%8E%92%E5%BA%8F/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>PHP实现选择排序</title>
+    <link href="http://www.w3php.com/archives/algorithm-php-selection-sort/"/>
+    <id>http://www.w3php.com/archives/algorithm-php-selection-sort/</id>
+    <published>2015-08-12T14:49:12.000Z</published>
+    <updated>2016-12-21T08:59:54.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p><strong>选择排序</strong>（Selection sort）是一种简单直观的排序算法。它的工作原理是每一次从待排序的数据元素中选出最小（或最大）的一个元素，存放在序列的起始位置，直到全部待排序的数据元素排完。</p>
+<p><img src="http://upload.wikimedia.org/wikipedia/commons/b/b0/Selection_sort_animation.gif" alt="效果图"></p>
+<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><p>在要排序的一组数中，选出最小（或者最大）的一个数与第1个位置的数交换；然后在剩下的数当中再找最小（或者最大）的与第2个位置的数交换，依次类推，直到第n-1个元素（倒数第二个数）和第n个元素（最后一个数）比较为止。</p>
+<p>简单选择排序的示例：</p>
+<p><img src="http://my.csdn.net/uploads/201207/18/1342586432_7130.jpg" alt="效果图"></p>
+<h2 id="操作方法"><a href="#操作方法" class="headerlink" title="操作方法"></a>操作方法</h2><ul>
+<li><p>第一趟，从n 个记录中找出关键码最小的记录与第一个记录交换；</p>
+</li>
+<li><p>第二趟，从第二个记录开始的n-1 个记录中再选出关键码最小的记录与第二个记录交换；</p>
+</li>
+<li><p>以此类推…..</p>
+</li>
+<li><p>第i 趟，则从第i 个记录开始的n-i+1 个记录中选出关键码最小的记录与第i 个记录交换，直到整个序列按关键码有序。</p>
+</li>
+</ul>
+<h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2> <figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;?php</span></div><div class="line"></div><div class="line">$numbers = [<span class="number">2</span>,<span class="number">34</span>,<span class="number">1123</span>,<span class="number">6</span>,<span class="number">334</span>,<span class="number">223</span>,<span class="number">34</span>,<span class="number">442</span>,<span class="number">949</span>];</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">selectSort</span><span class="params">($numbers)</span></span>&#123;</div><div class="line"></div><div class="line">    $length = count($numbers);</div><div class="line"></div><div class="line"></div><div class="line">    <span class="keyword">for</span>($i=<span class="number">0</span>;$i&lt;$length;$i++)&#123;</div><div class="line"></div><div class="line">        $min = $i;</div><div class="line"></div><div class="line">        <span class="keyword">for</span> ($j=$i+<span class="number">1</span>;$j&lt;$length;$j++)</div><div class="line">        &#123;</div><div class="line">            <span class="keyword">if</span> ($numbers[$j]&lt;$numbers[$min])&#123;</div><div class="line"></div><div class="line">                $min = $j;</div><div class="line"></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        $temp = $numbers[$i];</div><div class="line">        $numbers[$i] = $numbers[$min];</div><div class="line">        $numbers[$min] = $temp;</div><div class="line"></div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">return</span> $numbers;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">print_r( selectSort($numbers));</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 输出结果</div><div class="line"> * (</div><div class="line">[0] =&gt; 2</div><div class="line">[1] =&gt; 6</div><div class="line">[2] =&gt; 34</div><div class="line">[3] =&gt; 34</div><div class="line">[4] =&gt; 223</div><div class="line">[5] =&gt; 334</div><div class="line">[6] =&gt; 442</div><div class="line">[7] =&gt; 949</div><div class="line">[8] =&gt; 1123</div><div class="line">)</div><div class="line"> */</div></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;&lt;strong&gt;选择排序&lt;/strong&gt;（Selection sort）是一种简单直观的排序算法。它的工作原理是每一次从待排序的数据元素中
+    
+    </summary>
+    
+      <category term="php" scheme="http://www.w3php.com/categories/php/"/>
+    
+    
+      <category term="php" scheme="http://www.w3php.com/tags/php/"/>
+    
+      <category term="算法" scheme="http://www.w3php.com/tags/%E7%AE%97%E6%B3%95/"/>
+    
+      <category term="排序" scheme="http://www.w3php.com/tags/%E6%8E%92%E5%BA%8F/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>使用PHP递归调用实现经典游戏汉诺塔</title>
+    <link href="http://www.w3php.com/archives/algorithm-php-hanoi/"/>
+    <id>http://www.w3php.com/archives/algorithm-php-hanoi/</id>
+    <published>2014-12-10T10:29:09.000Z</published>
+    <updated>2016-12-21T08:59:54.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>汉诺塔：汉诺塔（又称河内塔）问题是源于印度一个古老传说的益智玩具。大梵天创造世界的时候做了三根金刚石柱子，在一根柱子上从下往上按照大小顺序摞着64片黄金圆盘。大梵天命令婆罗门把圆盘从下面开始按大小顺序重新摆放在另一根柱子上。并且规定，在小圆盘上不能放大圆盘，在三根柱子之间一次只能移动一个圆盘。</p>
+<h2 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h2><p><img src="http://dl2.iteye.com/upload/attachment/0097/9034/e384727a-a7fb-3f75-a99d-2f3bf9b229a7.jpeg" alt="汉诺塔"><br>有三根相邻的柱子，标号为A,B,C，A柱子上从下到上按金字塔状叠放着n个不同大小的圆盘，要把所有盘子一个一个移动到柱子B上，并且每次移动同一根柱子上都不能出现大盘子在小盘子上方。</p>
+<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><ol>
+<li><p>当只有一个盘子的时候，只需要从将A塔上的一个盘子移到C塔上。</p>
+</li>
+<li><p>当A塔上有两个盘子是，先将A塔上的1号盘子（编号从上到下）移动到B塔上，再将A塔上的2号盘子移动的C塔上，最后将B塔上的小盘子移动到C塔上。</p>
+</li>
+<li><p>当A塔上有3个盘子时，先将A塔上编号1至2的盘子（共2个）移动到B塔上（需借助C塔），然后将A塔上的3号最大的盘子移动到C塔，最后将B塔上的两个盘子借助A塔移动到C塔上。</p>
+</li>
+<li><p>当A塔上有n个盘子是，先将A塔上编号1至n-1的盘子（共n-1个）移动到B塔上（借助C塔），然后将A塔上最大的n号盘子移动到C塔上，最后将B塔上的n-1个盘子借助A塔移动到C塔上。</p>
+</li>
+</ol>
+<p>综上所述，除了只有一个盘子时不需要借助其他塔外，其余情况均一样（只是事件的复杂程度不一样）。</p>
+<h2 id="PHP代码实现"><a href="#PHP代码实现" class="headerlink" title="PHP代码实现"></a>PHP代码实现</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">hanoiTwoer</span><span class="params">($n,$a,$b,$c)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">if</span>($n==<span class="number">1</span>)&#123;</div><div class="line"></div><div class="line">        move(<span class="number">1</span>,$a,$c);</div><div class="line"></div><div class="line">    &#125;<span class="keyword">else</span>&#123;</div><div class="line"></div><div class="line">        hanoiTwoer($n<span class="number">-1</span>,$a,$c,$b);</div><div class="line"></div><div class="line">        move($n,$a,$c);</div><div class="line"></div><div class="line">        hanoiTwoer($n<span class="number">-1</span>,$b,$a,$c);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">move</span><span class="params">($n,$from,$to)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">echo</span><span class="string">'移动 盘子'</span>.$n.<span class="string">'从 '</span>.$from.<span class="string">'到'</span>.$to.<span class="string">"\n"</span>;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">hanoiTwoer(<span class="number">10</span>,<span class="string">'A'</span>,<span class="string">'B'</span>,<span class="string">'C'</span>);</div></pre></td></tr></table></figure>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;简介&quot;&gt;&lt;a href=&quot;#简介&quot; class=&quot;headerlink&quot; title=&quot;简介&quot;&gt;&lt;/a&gt;简介&lt;/h2&gt;&lt;p&gt;汉诺塔：汉诺塔（又称河内塔）问题是源于印度一个古老传说的益智玩具。大梵天创造世界的时候做了三根金刚石柱子，在一根柱子上从下往上按照大小顺序摞
+    
+    </summary>
+    
+      <category term="php" scheme="http://www.w3php.com/categories/php/"/>
+    
+    
+      <category term="php" scheme="http://www.w3php.com/tags/php/"/>
+    
+      <category term="算法" scheme="http://www.w3php.com/tags/%E7%AE%97%E6%B3%95/"/>
+    
+      <category term="排序" scheme="http://www.w3php.com/tags/%E6%8E%92%E5%BA%8F/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>PHP使用递归实现斐波那契数列</title>
+    <link href="http://www.w3php.com/archives/algorithm-php-fibonacci/"/>
+    <id>http://www.w3php.com/archives/algorithm-php-fibonacci/</id>
+    <published>2014-08-12T14:49:12.000Z</published>
+    <updated>2016-12-21T08:59:54.000Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>斐波那契数列又因数学家列昂纳多·斐波那契以兔子繁殖为例子而引入，故又称为“兔子数列”。</p>
+<blockquote>
+<p>一般而言，兔子在出生两个月后，就有繁殖能力，一对兔子每个月能生出一对小兔子来。如果所有兔子都不死，那么一年以后可以繁殖多少对兔子？</p>
+</blockquote>
+<h2 id="定义"><a href="#定义" class="headerlink" title="定义"></a>定义</h2><p><strong>斐波那契数列</strong> 指的是这样一个数列 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233，377，610，987，1597，2584，4181，6765，10946，17711，28657，46368……..</p>
+<p>这个数列从第3项开始，每一项都等于前两项之和。</p>
+<h2 id="递推公式"><a href="#递推公式" class="headerlink" title="递推公式"></a>递推公式</h2><p>斐波那契数列：1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, …<br>如果设F(n）为该数列的第n项（n∈N*），那么这句话可以写成如下形式：:F(n)=F(n-1)+F(n-2)<br>显然这是一个线性递推数列。</p>
+<p><img src="http://chuantu.biz/t5/44/1481099435x1973338723.gif" alt="示意图"></p>
+<p>下面我们使用PHP来是解决引言中提到的一年后可以繁殖多少兔子的问题。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">fibonacci</span><span class="params">($n)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> ($n&lt;=<span class="number">2</span>)&#123;</div><div class="line">        <span class="keyword">return</span> <span class="number">1</span>;</div><div class="line"></div><div class="line">    &#125;<span class="keyword">else</span>&#123;</div><div class="line">        <span class="keyword">return</span> fibonacci($n<span class="number">-1</span>)+fibonacci($n<span class="number">-2</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">echo</span> fibonacci(<span class="number">12</span>);</div><div class="line"></div><div class="line"><span class="comment">//输出 144</span></div></pre></td></tr></table></figure>]]></content>
+    
+    <summary type="html">
+    
+      &lt;h2 id=&quot;引言&quot;&gt;&lt;a href=&quot;#引言&quot; class=&quot;headerlink&quot; title=&quot;引言&quot;&gt;&lt;/a&gt;引言&lt;/h2&gt;&lt;p&gt;斐波那契数列又因数学家列昂纳多·斐波那契以兔子繁殖为例子而引入，故又称为“兔子数列”。&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;一般而言，兔
+    
+    </summary>
+    
+      <category term="php" scheme="http://www.w3php.com/categories/php/"/>
+    
+    
+      <category term="php" scheme="http://www.w3php.com/tags/php/"/>
+    
+      <category term="算法" scheme="http://www.w3php.com/tags/%E7%AE%97%E6%B3%95/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>PHP实现冒泡排序</title>
+    <link href="http://www.w3php.com/archives/algorithm-php-bubble-sort/"/>
+    <id>http://www.w3php.com/archives/algorithm-php-bubble-sort/</id>
+    <published>2014-07-13T12:49:12.000Z</published>
+    <updated>2016-12-21T08:59:54.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>冒泡排序算法的运作如下：（从后往前）</p>
+<ul>
+<li>比较相邻的元素。如果第一个比第二个大，就交换他们两个。</li>
+<li>对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。在这一点，最后的元素应该会是最大的数。</li>
+<li>针对所有的元素重复以上的步骤，除了最后一个。</li>
+<li>持续每次对越来越少的元素重复上面的步骤，直到没有任何一对数字需要比较。</li>
+</ul>
+<p><img src="http://upload.wikimedia.org/wikipedia/commons/3/37/Bubble_sort_animation.gif" alt="直观图"></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line">$numbers = [<span class="number">2</span>,<span class="number">34</span>,<span class="number">1123</span>,<span class="number">6</span>,<span class="number">334</span>,<span class="number">223</span>,<span class="number">34</span>,<span class="number">442</span>,<span class="number">949</span>];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">bubbleSort</span><span class="params">($numbers)</span></span>&#123;</div><div class="line">    $length = count($numbers);</div><div class="line">    <span class="keyword">for</span>($i=<span class="number">0</span>;$i&lt;$length;$i++)&#123;</div><div class="line">        <span class="keyword">for</span> ($j=<span class="number">0</span>;$j&lt;$length-$i<span class="number">-1</span>;$j++)&#123;</div><div class="line">            <span class="keyword">if</span> ($numbers[$j]&gt;$numbers[$j+<span class="number">1</span>])&#123;</div><div class="line">                $temp = $numbers[$j];</div><div class="line">                $numbers[$j] = $numbers[$j+<span class="number">1</span>];</div><div class="line">                $numbers[$j+<span class="number">1</span>] = $temp;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> $numbers;</div><div class="line">&#125;</div><div class="line"></div><div class="line">print_r(bubbleSort($numbers));</div></pre></td></tr></table></figure>
+<p>输出的结果为</p>
+<blockquote>
+<p>Array<br>(<br>    [0] =&gt; 2<br>    [1] =&gt; 6<br>    [2] =&gt; 34<br>    [3] =&gt; 34<br>    [4] =&gt; 223<br>    [5] =&gt; 334<br>    [6] =&gt; 442<br>    [7] =&gt; 949<br>    [8] =&gt; 1123<br>)  </p>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;冒泡排序算法的运作如下：（从后往前）&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;比较相邻的元素。如果第一个比第二个大，就交换他们两个。&lt;/li&gt;
+&lt;li&gt;对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。在这一点，最后的元素应该会是最大的数。&lt;/li&gt;
+&lt;li&gt;针对所有的元素重复
+    
+    </summary>
+    
+      <category term="php" scheme="http://www.w3php.com/categories/php/"/>
+    
+    
+      <category term="php" scheme="http://www.w3php.com/tags/php/"/>
+    
+      <category term="算法" scheme="http://www.w3php.com/tags/%E7%AE%97%E6%B3%95/"/>
+    
+      <category term="排序" scheme="http://www.w3php.com/tags/%E6%8E%92%E5%BA%8F/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>PHP实现插入排序算法</title>
+    <link href="http://www.w3php.com/archives/algorithm-php-insertsort/"/>
+    <id>http://www.w3php.com/archives/algorithm-php-insertsort/</id>
+    <published>2012-07-13T12:49:12.000Z</published>
+    <updated>2016-12-21T08:59:54.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>对于一个数组A[0..n-1]的排序，我们有很多方法可以实现，这次我们使用<strong>插入排序</strong>来实现一下。 </p>
+<p>为了能更好的理解插入排序，我们举一个例子。比如军训时候，教官要把所有的同学按照身高排成一列走正步。这时候，教官可以这么做：</p>
+<blockquote>
+<ol>
+<li>教官先随便挑出来一个同学站到操场中间，让其他同学则等在操场边上等待入队。</li>
+<li>教官命令一位等待的同学进入队列，让入该同学自己主动跟已经排好的队列中的同学进行对比身高，对比过后，找到比自己高的同学，站在TA的身后。</li>
+<li>教官重复步骤2，直至所有同学都进入队伍。</li>
+</ol>
+</blockquote>
+<p>这样整体下来，队伍就会按照顺序排列下来。</p>
+<p>对于等待入队的同学来说，他所要做的是，逐一对比已经在队伍中的同学身高，挑比自己高的同学站在后面，也就是插入比自己高，比自己低的同学的队伍中。</p>
+<p>代码如下：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">$numbers = [<span class="number">2</span>,<span class="number">34</span>,<span class="number">1123</span>,<span class="number">6</span>,<span class="number">334</span>,<span class="number">223</span>,<span class="number">34</span>,<span class="number">442</span>,<span class="number">949</span>];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">insertSort</span><span class="params">($numbers)</span></span>&#123;</div><div class="line"></div><div class="line">    $length = count($numbers);</div><div class="line">    <span class="keyword">for</span> ($i=<span class="number">0</span>;$i&lt;$length;$i++)&#123;</div><div class="line">        $j = $i;</div><div class="line">        $key = $numbers[$i];</div><div class="line">        <span class="keyword">while</span>($j&gt;<span class="number">0</span>&amp;&amp;$numbers[$j<span class="number">-1</span>]&gt;$key)&#123;</div><div class="line">            $numbers[$j] = $numbers[$j<span class="number">-1</span>];</div><div class="line">            $j--;</div><div class="line">        &#125;</div><div class="line">        $numbers[$j]=$key;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> $numbers;</div><div class="line">&#125;</div><div class="line"></div><div class="line">print_r(insertSort($numbers));</div></pre></td></tr></table></figure>
+<p>最终输出结果</p>
+<blockquote>
+<p>Array<br>(<br>    [0] =&gt; 2<br>    [1] =&gt; 6<br>    [2] =&gt; 34<br>    [3] =&gt; 34<br>    [4] =&gt; 223<br>    [5] =&gt; 334<br>    [6] =&gt; 442<br>    [7] =&gt; 949<br>    [8] =&gt; 1123<br>)</p>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;对于一个数组A[0..n-1]的排序，我们有很多方法可以实现，这次我们使用&lt;strong&gt;插入排序&lt;/strong&gt;来实现一下。 &lt;/p&gt;
+&lt;p&gt;为了能更好的理解插入排序，我们举一个例子。比如军训时候，教官要把所有的同学按照身高排成一列走正步。这时候，教官可以这么做：&lt;/p
+    
+    </summary>
+    
+      <category term="php" scheme="http://www.w3php.com/categories/php/"/>
+    
+    
+      <category term="php" scheme="http://www.w3php.com/tags/php/"/>
+    
+      <category term="算法" scheme="http://www.w3php.com/tags/%E7%AE%97%E6%B3%95/"/>
+    
+      <category term="排序" scheme="http://www.w3php.com/tags/%E6%8E%92%E5%BA%8F/"/>
+    
+  </entry>
+  
+</feed>
