@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="MYSQL建表优化类型选择"/>
+
+
+
+
+  <meta name="keywords" content="mysql,优化," />
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="w3php">
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2.0.0" />
+
+
+
+<link rel="canonical" href="http://www.w3php.com/archives/mysql-optimization-1/"/>
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=2.0.0" />
+
+
+
+  
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?24750768336da0680dfc6eee489e8b56";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+    <title> MYSQL建表优化类型选择 · w3php </title>
+  </head>
+
+  <body>
+    <div class="container">
+      <header id="header" class="header"><div class="logo-wrapper">
+  <a href="/." class="logo">w3php</a>
+</div>
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/">
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/archives/">
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/tags">
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item">
+          <a class="menu-item-link" href="/categories">
+            分类
+          </a>
+        </li>
+      
+      
+        <li class="menu-search">
+          <form>
+            <i class="iconfont icon-search" id="open-search"></i>
+            <input type="text" class="search-input" id="search-input" />
+            <i class="iconfont icon-close" id="close-search"></i>
+          </form>
+        </li>
+      
+    </ul>
+  
+</nav>
+
+<div class="mobile-navbar">
+  <div class="mobile-header">
+    <div class="mobile-header-logo">
+      <a href="/." class="logo">w3php</a>
+    </div>
+
+    <div class="mobile-header-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+  <nav class="mobile-menu">
+    
+      
+      <a class="mobile-menu-item" href="/">
+        首页
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/archives/">
+        归档
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/tags">
+        标签
+      </a>
+    
+      
+      <a class="mobile-menu-item" href="/categories">
+        分类
+      </a>
+    
+  </nav>
+</div>
+      </header>
+
+      <main id="main" class="main">
+        <div class="content-wrapper">
+          <div id="content" class="content">
+            
+  
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          MYSQL建表优化类型选择
+        
+      </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2016年12月26日
+        </span>
+      </div>
+    </header>
+
+    
+      <div class="post-toc" id="post-toc">
+        <h2 class="post-toc-title">文章目录</h2>
+        <div class="post-toc-content">
+          <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#字段分离原则"><span class="toc-text">字段分离原则</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#定长与变长的分离"><span class="toc-text">定长与变长的分离</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#常用字段和不常用字段的分离"><span class="toc-text">常用字段和不常用字段的分离</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#合理利用冗余字段"><span class="toc-text">合理利用冗余字段</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#字段选择原则"><span class="toc-text">字段选择原则</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#字段类型优先级"><span class="toc-text">字段类型优先级</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#类型长度最优化"><span class="toc-text">类型长度最优化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#避免使用null"><span class="toc-text">避免使用null</span></a></li></ol></li></ol>
+        </div>
+      </div>
+    
+
+    <div class="post-content">
+      
+        <p>我们在说道MYSQL优化的时候，很多人都知道一些具体的优化方式，如：合理选择字段类型，合理建立索引，零零散散思路比较零碎，隐隐约约之中觉得SQL应该这样写，字段应该选择某种类型，索引应该怎怎么建立，但是这些抽象的思路，在实际操作过程中很难有效的指挥行动。之所以造成这样的后果，是因为我们优化没有一个系统的思路，不够具体。下面我们总结一下MYSQL优化所需要的分析方式和具体的优化原则和措施。</p>
+<h2 id="字段分离原则"><a href="#字段分离原则" class="headerlink" title="字段分离原则"></a>字段分离原则</h2><h3 id="定长与变长的分离"><a href="#定长与变长的分离" class="headerlink" title="定长与变长的分离"></a>定长与变长的分离</h3><p>如果字段每一个列长度都是固定的，那么每一行数据存储的长度也是固定的，数据在磁盘上存储的时候也是整齐而有规则的，所以我们在查找的时候，速度会比较快，因此，我们在建表的时候，尽量选择定长的数据类型以加快我们的查询速度。</p>
+<blockquote>
+<p>定长数据类型: </p>
+<ul>
+<li>int（占用4个字节长度）</li>
+<li>char（占用4个字符长度）</li>
+<li>time（每个单元字符长度也是固定的）</li>
+</ul>
+</blockquote>
+<p>与定长字段相反，变长字段的查询速度没有定长效率高，因此在表设计的时候，可以单独把这些字段提出来，单独存放到一个表，以免影响定长字段的查询速度。即所谓：<strong>定长与变长的分离</strong>。</p>
+<blockquote>
+<p>变数据类型: </p>
+<ul>
+<li>varchar</li>
+<li>text</li>
+<li>blob</li>
+</ul>
+</blockquote>
+<h3 id="常用字段和不常用字段的分离"><a href="#常用字段和不常用字段的分离" class="headerlink" title="常用字段和不常用字段的分离"></a>常用字段和不常用字段的分离</h3><p>在建表的时候，我们把常用字段和非常用字段，根据使用频率，进行分离。</p>
+<p>如： 用户表  user(id,user_name,password,email,description)</p>
+<p>其中字段 id,user_name,password,email我们可能会经常去查，然而description字段描述的是一个用户的个人介绍，我们很少会查到，或者查询的频率比较低，这个时候，我们可以把这个字段单独分离出去，这样我们在查询的时候，就避免冗余的查询，从而加快查询速度。</p>
+<h3 id="合理利用冗余字段"><a href="#合理利用冗余字段" class="headerlink" title="合理利用冗余字段"></a>合理利用冗余字段</h3><p>在一对多，而且需要关联统计的字段上，我们可以使用冗余字段。</p>
+<p>例如：一条微博的评论数量，转发次数，点赞数量等。</p>
+<p>例如我们把评论数量单独增加一个字段在一条微博上，每次查询时候，只需要查下微博的主表，就可以查出来评论数量，而不用每次再查一条微博后的时候再去关联查询评论表count下数量。这种做法就是所谓的空间换时间，使用一个冗余字段，从而减少查询的时间。</p>
+<h2 id="字段选择原则"><a href="#字段选择原则" class="headerlink" title="字段选择原则"></a>字段选择原则</h2><h3 id="字段类型优先级"><a href="#字段类型优先级" class="headerlink" title="字段类型优先级"></a>字段类型优先级</h3><blockquote>
+<p>优先级： int,tinyint &gt; date,time  &gt;  enum,char  &gt; varchar  &gt;  blob,text </p>
+<ul>
+<li>int,tinyint  长度固定，没有字符集和校对集</li>
+<li>date,time    长度固定，没有字符集和校对集</li>
+<li>enum,char    长度固定，有字符集和校对集  （enum底层把字符转为整形存取，需转化过程）</li>
+<li>varchar      长度不固定，无字符集和校对集</li>
+<li>blob,text,   长度不固定，有字符集和校对集，无法使用临时表，排序等操作需要在磁盘排序</li>
+</ul>
+</blockquote>
+<h3 id="类型长度最优化"><a href="#类型长度最优化" class="headerlink" title="类型长度最优化"></a>类型长度最优化</h3><p>我们在选择字符长度的时候，尽量使用最优化的长度，如char(5),能使用尽可能短的长度就不使用浪费，节省内存空间，以免影响读写速度。</p>
+<p>如： varchar(30)和varchar(255),如果存储的内容varchar(30)<br>如： int和smallint 能使用smallint就不用int</p>
+<p>满足，就不用varchar(255),因为尽管内容存储形同，但是在表关联查询时，varchar(255)使用更多内存空间。</p>
+<h3 id="避免使用null"><a href="#避免使用null" class="headerlink" title="避免使用null"></a>避免使用null</h3><p>null不方便使用索引，并且需要额外的空间储存。并且写SQL语句的时候只能使用IS null 或者 IS NOT null.</p>
+
+      
+    </div>
+
+    
+      <footer class="post-footer">
+        <div class="post-tags">
+          
+            <a href="/tags/mysql/">mysql</a>
+          
+            <a href="/tags/优化/">优化</a>
+          
+        </div>
+
+        
+  <nav class="post-nav">
+    
+    
+      <a class="next" href="/archives/server-high-performance/">
+        <span class="next-text nav-default">高可用可伸缩架构实用经验谈</span>
+        <span class="prev-text nav-mobile">下一篇</span>
+        <i class="iconfont icon-right"></i>
+      </a>
+    
+  </nav>
+
+      </footer>
+    
+  </article>
+
+
+          </div>
+          
+  <div class="comments" id="comments">
+    
+      <div class="ds-thread" data-thread-key="archives/mysql-optimization-1/"
+           data-title="MYSQL建表优化类型选择" data-url="http://www.w3php.com/archives/mysql-optimization-1/">
+      </div>
+    
+  </div>
+
+        </div>  
+      </main>
+
+      <footer id="footer" class="footer">
+  <div class="social-links">
+    
+      
+        
+          <a href="mailto:your@email.com" class="iconfont icon-email" title="email"></a>
+        
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+    
+    
+  </div>
+
+
+<div class="copyright">
+  <span class="power-by">
+    由 <a class="hexo-link" href="https://hexo.io/">Hexo</a> 强力驱动
+  </span>
+  
+  <span class="theme-info">
+    主题 - 
+    <a class="theme-link" href="https://github.com/ahonn/hexo-theme-even">Even</a>
+  </span>
+
+  <span class="copyright-year">
+    
+    &copy; 
+     
+      2015 - 
+    
+    2016
+
+    <span class="heart">
+      <i class="iconfont icon-heart"></i>
+    </span>
+    <span class="author">Dolia</span>
+  </span>
+</div>
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+
+    
+  
+
+  <script type="text/javascript">
+    var duoshuoQuery = {short_name:"w3php"};
+    (function() {
+      var ds = document.createElement('script');
+      ds.type = 'text/javascript';ds.async = true;
+      ds.id = 'duoshuo-script';
+      ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+      ds.charset = 'UTF-8';
+      (document.getElementsByTagName('head')[0]
+      || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+  </script>
+
+
+
+    
+
+
+  <script type="text/javascript" src="/lib/jquery/jquery-3.1.1.min.js"></script>
+
+    <script type="text/javascript" src="/js/src/even.js?v=2.0.0"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=2.0.0"></script>
+
+  </body>
+</html>

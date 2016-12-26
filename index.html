@@ -152,6 +152,77 @@
     <header class="post-header">
       <h1 class="post-title">
         
+          <a class="post-link" href="/archives/mysql-optimization-1/">MYSQL建表优化类型选择</a>
+        
+      </h1>
+
+      <div class="post-meta">
+        <span class="post-time">
+          2016年12月26日
+        </span>
+      </div>
+    </header>
+
+    
+
+    <div class="post-content">
+      
+        
+
+        
+          <p>我们在说道MYSQL优化的时候，很多人都知道一些具体的优化方式，如：合理选择字段类型，合理建立索引，零零散散思路比较零碎，隐隐约约之中觉得SQL应该这样写，字段应该选择某种类型，索引应该怎怎么建立，但是这些抽象的思路，在实际操作过程中很难有效的指挥行动。之所以造成这样的后果，是因为我们优化没有一个系统的思路，不够具体。下面我们总结一下MYSQL优化所需要的分析方式和具体的优化原则和措施。</p>
+<h2 id="字段分离原则"><a href="#字段分离原则" class="headerlink" title="字段分离原则"></a>字段分离原则</h2><h3 id="定长与变长的分离"><a href="#定长与变长的分离" class="headerlink" title="定长与变长的分离"></a>定长与变长的分离</h3><p>如果字段每一个列长度都是固定的，那么每一行数据存储的长度也是固定的，数据在磁盘上存储的时候也是整齐而有规则的，所以我们在查找的时候，速度会比较快，因此，我们在建表的时候，尽量选择定长的数据类型以加快我们的查询速度。</p>
+<blockquote>
+<p>定长数据类型: </p>
+<ul>
+<li>int（占用4个字节长度）</li>
+<li>char（占用4个字符长度）</li>
+<li>time（每个单元字符长度也是固定的）</li>
+</ul>
+</blockquote>
+<p>与定长字段相反，变长字段的查询速度没有定长效率高，因此在表设计的时候，可以单独把这些字段提出来，单独存放到一个表，以免影响定长字段的查询速度。即所谓：<strong>定长与变长的分离</strong>。</p>
+<blockquote>
+<p>变数据类型: </p>
+<ul>
+<li>varchar</li>
+<li>text</li>
+<li>blob</li>
+</ul>
+</blockquote>
+<h3 id="常用字段和不常用字段的分离"><a href="#常用字段和不常用字段的分离" class="headerlink" title="常用字段和不常用字段的分离"></a>常用字段和不常用字段的分离</h3><p>在建表的时候，我们把常用字段和非常用字段，根据使用频率，进行分离。</p>
+<p>如： 用户表  user(id,user_name,password,email,description)</p>
+<p>其中字段 id,user_name,password,email我们可能会经常去查，然而description字段描述的是一个用户的个人介绍，我们很少会查到，或者查询的频率比较低，这个时候，我们可以把这个字段单独分离出去，这样我们在查询的时候，就避免冗余的查询，从而加快查询速度。</p>
+<h3 id="合理利用冗余字段"><a href="#合理利用冗余字段" class="headerlink" title="合理利用冗余字段"></a>合理利用冗余字段</h3><p>在一对多，而且需要关联统计的字段上，我们可以使用冗余字段。</p>
+<p>例如：一条微博的评论数量，转发次数，点赞数量等。</p>
+<p>例如我们把评论数量单独增加一个字段在一条微博上，每次查询时候，只需要查下微博的主表，就可以查出来评论数量，而不用每次再查一条微博后的时候再去关联查询评论表count下数量。这种做法就是所谓的空间换时间，使用一个冗余字段，从而减少查询的时间。</p>
+<h2 id="字段选择原则"><a href="#字段选择原则" class="headerlink" title="字段选择原则"></a>字段选择原则</h2><h3 id="字段类型优先级"><a href="#字段类型优先级" class="headerlink" title="字段类型优先级"></a>字段类型优先级</h3><blockquote>
+<p>优先级： int,tinyint &gt; date,time  &gt;  enum,char  &gt; varchar  &gt;  blob,text </p>
+<ul>
+<li>int,tinyint  长度固定，没有字符集和校对集</li>
+<li>date,time    长度固定，没有字符集和校对集</li>
+<li>enum,char    长度固定，有字符集和校对集  （enum底层把字符转为整形存取，需转化过程）</li>
+<li>varchar      长度不固定，无字符集和校对集</li>
+<li>blob,text,   长度不固定，有字符集和校对集，无法使用临时表，排序等操作需要在磁盘排序</li>
+</ul>
+</blockquote>
+<h3 id="类型长度最优化"><a href="#类型长度最优化" class="headerlink" title="类型长度最优化"></a>类型长度最优化</h3><p>我们在选择字符长度的时候，尽量使用最优化的长度，如char(5),能使用尽可能短的长度就不使用浪费，节省内存空间，以免影响读写速度。</p>
+<p>如： varchar(30)和varchar(255),如果存储的内容varchar(30)<br>如： int和smallint 能使用smallint就不用int</p>
+<p>满足，就不用varchar(255),因为尽管内容存储形同，但是在表关联查询时，varchar(255)使用更多内存空间。</p>
+<h3 id="避免使用null"><a href="#避免使用null" class="headerlink" title="避免使用null"></a>避免使用null</h3><p>null不方便使用索引，并且需要额外的空间储存。并且写SQL语句的时候只能使用IS null 或者 IS NOT null.</p>
+
+        
+      
+    </div>
+
+    
+  </article>
+
+    
+      
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
           <a class="post-link" href="/archives/server-high-performance/">高可用可伸缩架构实用经验谈</a>
         
       </h1>
