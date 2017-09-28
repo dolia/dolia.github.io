@@ -4,30 +4,6 @@
   
     
     <entry>
-      <title><![CDATA[MYSQL索引优化]]></title>
-      <url>http://www.w3php.com/archives/mysql-optimization-2/</url>
-      <content type="html"><![CDATA[<h2 id="索引类型"><a href="#索引类型" class="headerlink" title="索引类型"></a>索引类型</h2><h3 id="Btree索引"><a href="#Btree索引" class="headerlink" title="Btree索引"></a>Btree索引</h3><h3 id="Hash索引"><a href="#Hash索引" class="headerlink" title="Hash索引"></a>Hash索引</h3>]]></content>
-      
-        <categories>
-            
-            <category> mysql </category>
-            
-        </categories>
-        
-        
-        <tags>
-            
-            <tag> mysql </tag>
-            
-            <tag> 优化 </tag>
-            
-            <tag> 索引 </tag>
-            
-        </tags>
-        
-    </entry>
-    
-    <entry>
       <title><![CDATA[MYSQL建表优化]]></title>
       <url>http://www.w3php.com/archives/mysql-optimization-1/</url>
       <content type="html"><![CDATA[<p>我们在说道MYSQL优化的时候，很多人都知道一些具体的优化方式，如：合理选择字段类型，合理建立索引，零零散散思路比较零碎，隐隐约约之中觉得SQL应该这样写，字段应该选择某种类型，索引应该怎怎么建立，但是这些抽象的思路，在实际操作过程中很难有效的指挥行动。之所以造成这样的后果，是因为我们优化没有一个系统的思路，不够具体。下面我们总结一下MYSQL优化所需要的分析方式和具体的优化原则和措施。</p>
@@ -80,9 +56,9 @@
         
         <tags>
             
-            <tag> mysql </tag>
-            
             <tag> 优化 </tag>
+            
+            <tag> mysql </tag>
             
         </tags>
         
@@ -146,9 +122,9 @@
         
         <tags>
             
-            <tag> 优化 </tag>
-            
             <tag> server </tag>
+            
+            <tag> 优化 </tag>
             
         </tags>
         
