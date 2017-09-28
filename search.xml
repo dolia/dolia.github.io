@@ -4,7 +4,31 @@
   
     
     <entry>
-      <title><![CDATA[MYSQL建表优化类型选择]]></title>
+      <title><![CDATA[MYSQL索引优化]]></title>
+      <url>http://www.w3php.com/archives/mysql-optimization-2/</url>
+      <content type="html"><![CDATA[<h2 id="索引类型"><a href="#索引类型" class="headerlink" title="索引类型"></a>索引类型</h2><h3 id="Btree索引"><a href="#Btree索引" class="headerlink" title="Btree索引"></a>Btree索引</h3><h3 id="Hash索引"><a href="#Hash索引" class="headerlink" title="Hash索引"></a>Hash索引</h3>]]></content>
+      
+        <categories>
+            
+            <category> mysql </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> mysql </tag>
+            
+            <tag> 优化 </tag>
+            
+            <tag> 索引 </tag>
+            
+        </tags>
+        
+    </entry>
+    
+    <entry>
+      <title><![CDATA[MYSQL建表优化]]></title>
       <url>http://www.w3php.com/archives/mysql-optimization-1/</url>
       <content type="html"><![CDATA[<p>我们在说道MYSQL优化的时候，很多人都知道一些具体的优化方式，如：合理选择字段类型，合理建立索引，零零散散思路比较零碎，隐隐约约之中觉得SQL应该这样写，字段应该选择某种类型，索引应该怎怎么建立，但是这些抽象的思路，在实际操作过程中很难有效的指挥行动。之所以造成这样的后果，是因为我们优化没有一个系统的思路，不够具体。下面我们总结一下MYSQL优化所需要的分析方式和具体的优化原则和措施。</p>
 <h2 id="字段分离原则"><a href="#字段分离原则" class="headerlink" title="字段分离原则"></a>字段分离原则</h2><h3 id="定长与变长的分离"><a href="#定长与变长的分离" class="headerlink" title="定长与变长的分离"></a>定长与变长的分离</h3><p>如果字段每一个列长度都是固定的，那么每一行数据存储的长度也是固定的，数据在磁盘上存储的时候也是整齐而有规则的，所以我们在查找的时候，速度会比较快，因此，我们在建表的时候，尽量选择定长的数据类型以加快我们的查询速度。</p>
@@ -46,6 +70,22 @@
 <p>满足，就不用varchar(255),因为尽管内容存储形同，但是在表关联查询时，varchar(255)使用更多内存空间。</p>
 <h3 id="避免使用null"><a href="#避免使用null" class="headerlink" title="避免使用null"></a>避免使用null</h3><p>null不方便使用索引，并且需要额外的空间储存。并且写SQL语句的时候只能使用IS null 或者 IS NOT null.</p>
 ]]></content>
+      
+        <categories>
+            
+            <category> mysql </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> mysql </tag>
+            
+            <tag> 优化 </tag>
+            
+        </tags>
+        
     </entry>
     
     <entry>
@@ -96,6 +136,22 @@
 <p><img src="http://7j1ynv.com5.z0.glb.qiniucdn.com/wp-content/uploads/2015/03/EAD86F4B-D818-4D46-A4F8-F802765B3BEA.jpg" alt=""></p>
 <p>本文中分享的这些技巧和方法，主要想帮助不太复杂的业务场景或者中小型应用快速搭建起高可用可伸缩的系统。关于如何构建高可用和可伸缩系统还有很多更为细节的点和实践经验值得探讨，望以后能与大家做更充分的交流。</p>
 ]]></content>
+      
+        <categories>
+            
+            <category> server </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> 优化 </tag>
+            
+            <tag> server </tag>
+            
+        </tags>
+        
     </entry>
     
     <entry>
@@ -113,8 +169,26 @@
 <li>从i开始向后搜索，即由前开始向后搜索(i++)，找到第一个大于key的A[i]，将A[i]和A[j]互换；</li>
 <li>重复第3、4步，直到i=j； (3,4步中，没找到符合条件的值，即3中A[j]不小于key,4中A[i]不大于key的时候改变j、i的值，使得j=j-1，i=i+1，直至找到为止。找到符合条件的值，进行交换的时候i， j指针位置不变。另外，i==j这一过程一定正好是i+或j-完成的时候，此时令循环结束）。</li>
 </ol>
-<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div><div class="line">$numbers = [<span class="number">2</span>,<span class="number">34</span>,<span class="number">1123</span>,<span class="number">6</span>,<span class="number">334</span>,<span class="number">223</span>,<span class="number">34</span>,<span class="number">442</span>,<span class="number">949</span>];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">quickSort</span><span class="params">($numbers)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (!is_array($numbers)) <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line"></div><div class="line">    $length = count($numbers);</div><div class="line"></div><div class="line">    <span class="keyword">if</span> ($length&lt;=<span class="number">1</span>) <span class="keyword">return</span> $numbers;</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">    $leftArr = $rightArr = [];</div><div class="line"></div><div class="line">    <span class="keyword">for</span> ($i=<span class="number">1</span>;$i&lt;$length;$i++)&#123;</div><div class="line"></div><div class="line">        <span class="keyword">if</span> ($numbers[$i]&lt;$numbers[<span class="number">0</span>])&#123;</div><div class="line"></div><div class="line"></div><div class="line">            $leftArr[] = $numbers[$i];</div><div class="line">        &#125;<span class="keyword">else</span>&#123;</div><div class="line">            $rightArr[] = $numbers[$i];</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    $leftArr = quickSort($leftArr);</div><div class="line"></div><div class="line">    $rightArr = quickSort($rightArr);</div><div class="line"></div><div class="line"></div><div class="line">    <span class="keyword">return</span> array_merge($leftArr,[$numbers[<span class="number">0</span>]],$rightArr);</div><div class="line"></div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">print_r(quickSort($numbers));</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> *</div><div class="line"> * 输出</div><div class="line"> * Array</div><div class="line">(</div><div class="line">[0] =&gt; 2</div><div class="line">[1] =&gt; 6</div><div class="line">[2] =&gt; 34</div><div class="line">[3] =&gt; 34</div><div class="line">[4] =&gt; 223</div><div class="line">[5] =&gt; 334</div><div class="line">[6] =&gt; 442</div><div class="line">[7] =&gt; 949</div><div class="line">[8] =&gt; 1123</div><div class="line">)</div><div class="line"></div><div class="line"> *</div><div class="line"> */</div></pre></td></tr></table></figure>
+<h2 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"></div><div class="line">$numbers = [<span class="number">2</span>,<span class="number">34</span>,<span class="number">1123</span>,<span class="number">6</span>,<span class="number">334</span>,<span class="number">223</span>,<span class="number">34</span>,<span class="number">442</span>,<span class="number">949</span>];</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">quickSort</span><span class="params">($numbers)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (!is_array($numbers)) <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line"></div><div class="line">    $length = count($numbers);</div><div class="line"></div><div class="line">    <span class="keyword">if</span> ($length&lt;=<span class="number">1</span>) <span class="keyword">return</span> $numbers;</div><div class="line"></div><div class="line"></div><div class="line"></div><div class="line">    $leftArr = $rightArr = [];</div><div class="line"></div><div class="line">    <span class="keyword">for</span> ($i=<span class="number">1</span>;$i&lt;$length;$i++)&#123;</div><div class="line"></div><div class="line">        <span class="keyword">if</span> ($numbers[$i]&lt;$numbers[<span class="number">0</span>])&#123;</div><div class="line"></div><div class="line"></div><div class="line">            $leftArr[] = $numbers[$i];</div><div class="line">        &#125;<span class="keyword">else</span>&#123;</div><div class="line">            $rightArr[] = $numbers[$i];</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    $leftArr = quickSort($leftArr);</div><div class="line"></div><div class="line">    $rightArr = quickSort($rightArr);</div><div class="line"></div><div class="line"></div><div class="line">    <span class="keyword">return</span> array_merge($leftArr,[$numbers[<span class="number">0</span>]],$rightArr);</div><div class="line"></div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"></div><div class="line">print_r(quickSort($numbers));</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> * 输出</span></div><div class="line"><span class="comment"> * Array</span></div><div class="line"><span class="comment">(</span></div><div class="line"><span class="comment">[0] =&gt; 2</span></div><div class="line"><span class="comment">[1] =&gt; 6</span></div><div class="line"><span class="comment">[2] =&gt; 34</span></div><div class="line"><span class="comment">[3] =&gt; 34</span></div><div class="line"><span class="comment">[4] =&gt; 223</span></div><div class="line"><span class="comment">[5] =&gt; 334</span></div><div class="line"><span class="comment">[6] =&gt; 442</span></div><div class="line"><span class="comment">[7] =&gt; 949</span></div><div class="line"><span class="comment">[8] =&gt; 1123</span></div><div class="line"><span class="comment">)</span></div><div class="line"><span class="comment"></span></div><div class="line"><span class="comment"> *</span></div><div class="line"><span class="comment"> */</span></div></pre></td></tr></table></figure>
 ]]></content>
+      
+        <categories>
+            
+            <category> php </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> php </tag>
+            
+            <tag> 算法 </tag>
+            
+            <tag> 排序 </tag>
+            
+        </tags>
+        
     </entry>
     
     <entry>
@@ -135,7 +209,25 @@
 <li><p>第i 趟，则从第i 个记录开始的n-i+1 个记录中选出关键码最小的记录与第i 个记录交换，直到整个序列按关键码有序。</p>
 </li>
 </ul>
-<h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2> <figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;?php</span></div><div class="line"></div><div class="line">$numbers = [<span class="number">2</span>,<span class="number">34</span>,<span class="number">1123</span>,<span class="number">6</span>,<span class="number">334</span>,<span class="number">223</span>,<span class="number">34</span>,<span class="number">442</span>,<span class="number">949</span>];</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">selectSort</span><span class="params">($numbers)</span></span>&#123;</div><div class="line"></div><div class="line">    $length = count($numbers);</div><div class="line"></div><div class="line"></div><div class="line">    <span class="keyword">for</span>($i=<span class="number">0</span>;$i&lt;$length;$i++)&#123;</div><div class="line"></div><div class="line">        $min = $i;</div><div class="line"></div><div class="line">        <span class="keyword">for</span> ($j=$i+<span class="number">1</span>;$j&lt;$length;$j++)</div><div class="line">        &#123;</div><div class="line">            <span class="keyword">if</span> ($numbers[$j]&lt;$numbers[$min])&#123;</div><div class="line"></div><div class="line">                $min = $j;</div><div class="line"></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        $temp = $numbers[$i];</div><div class="line">        $numbers[$i] = $numbers[$min];</div><div class="line">        $numbers[$min] = $temp;</div><div class="line"></div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">return</span> $numbers;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">print_r( selectSort($numbers));</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 输出结果</div><div class="line"> * (</div><div class="line">[0] =&gt; 2</div><div class="line">[1] =&gt; 6</div><div class="line">[2] =&gt; 34</div><div class="line">[3] =&gt; 34</div><div class="line">[4] =&gt; 223</div><div class="line">[5] =&gt; 334</div><div class="line">[6] =&gt; 442</div><div class="line">[7] =&gt; 949</div><div class="line">[8] =&gt; 1123</div><div class="line">)</div><div class="line"> */</div></pre></td></tr></table></figure>]]></content>
+<h2 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h2> <figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="meta">&lt;?php</span></div><div class="line"></div><div class="line">$numbers = [<span class="number">2</span>,<span class="number">34</span>,<span class="number">1123</span>,<span class="number">6</span>,<span class="number">334</span>,<span class="number">223</span>,<span class="number">34</span>,<span class="number">442</span>,<span class="number">949</span>];</div><div class="line"></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">selectSort</span><span class="params">($numbers)</span></span>&#123;</div><div class="line"></div><div class="line">    $length = count($numbers);</div><div class="line"></div><div class="line"></div><div class="line">    <span class="keyword">for</span>($i=<span class="number">0</span>;$i&lt;$length;$i++)&#123;</div><div class="line"></div><div class="line">        $min = $i;</div><div class="line"></div><div class="line">        <span class="keyword">for</span> ($j=$i+<span class="number">1</span>;$j&lt;$length;$j++)</div><div class="line">        &#123;</div><div class="line">            <span class="keyword">if</span> ($numbers[$j]&lt;$numbers[$min])&#123;</div><div class="line"></div><div class="line">                $min = $j;</div><div class="line"></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        $temp = $numbers[$i];</div><div class="line">        $numbers[$i] = $numbers[$min];</div><div class="line">        $numbers[$min] = $temp;</div><div class="line"></div><div class="line"></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">return</span> $numbers;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">print_r( selectSort($numbers));</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"><span class="comment"> * 输出结果</span></div><div class="line"><span class="comment"> * (</span></div><div class="line"><span class="comment">[0] =&gt; 2</span></div><div class="line"><span class="comment">[1] =&gt; 6</span></div><div class="line"><span class="comment">[2] =&gt; 34</span></div><div class="line"><span class="comment">[3] =&gt; 34</span></div><div class="line"><span class="comment">[4] =&gt; 223</span></div><div class="line"><span class="comment">[5] =&gt; 334</span></div><div class="line"><span class="comment">[6] =&gt; 442</span></div><div class="line"><span class="comment">[7] =&gt; 949</span></div><div class="line"><span class="comment">[8] =&gt; 1123</span></div><div class="line"><span class="comment">)</span></div><div class="line"><span class="comment"> */</span></div></pre></td></tr></table></figure>]]></content>
+      
+        <categories>
+            
+            <category> php </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> php </tag>
+            
+            <tag> 算法 </tag>
+            
+            <tag> 排序 </tag>
+            
+        </tags>
+        
     </entry>
     
     <entry>
@@ -156,6 +248,24 @@
 <p>综上所述，除了只有一个盘子时不需要借助其他塔外，其余情况均一样（只是事件的复杂程度不一样）。</p>
 <h2 id="PHP代码实现"><a href="#PHP代码实现" class="headerlink" title="PHP代码实现"></a>PHP代码实现</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">hanoiTwoer</span><span class="params">($n,$a,$b,$c)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">if</span>($n==<span class="number">1</span>)&#123;</div><div class="line"></div><div class="line">        move(<span class="number">1</span>,$a,$c);</div><div class="line"></div><div class="line">    &#125;<span class="keyword">else</span>&#123;</div><div class="line"></div><div class="line">        hanoiTwoer($n<span class="number">-1</span>,$a,$c,$b);</div><div class="line"></div><div class="line">        move($n,$a,$c);</div><div class="line"></div><div class="line">        hanoiTwoer($n<span class="number">-1</span>,$b,$a,$c);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">move</span><span class="params">($n,$from,$to)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">echo</span><span class="string">'移动 盘子'</span>.$n.<span class="string">'从 '</span>.$from.<span class="string">'到'</span>.$to.<span class="string">"\n"</span>;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line">hanoiTwoer(<span class="number">10</span>,<span class="string">'A'</span>,<span class="string">'B'</span>,<span class="string">'C'</span>);</div></pre></td></tr></table></figure>
 ]]></content>
+      
+        <categories>
+            
+            <category> php </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> php </tag>
+            
+            <tag> 算法 </tag>
+            
+            <tag> 排序 </tag>
+            
+        </tags>
+        
     </entry>
     
     <entry>
@@ -171,6 +281,22 @@
 <p><img src="http://chuantu.biz/t5/44/1481099435x1973338723.gif" alt="示意图"></p>
 <p>下面我们使用PHP来是解决引言中提到的一年后可以繁殖多少兔子的问题。</p>
 <figure class="highlight php"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">fibonacci</span><span class="params">($n)</span></span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> ($n&lt;=<span class="number">2</span>)&#123;</div><div class="line">        <span class="keyword">return</span> <span class="number">1</span>;</div><div class="line"></div><div class="line">    &#125;<span class="keyword">else</span>&#123;</div><div class="line">        <span class="keyword">return</span> fibonacci($n<span class="number">-1</span>)+fibonacci($n<span class="number">-2</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">echo</span> fibonacci(<span class="number">12</span>);</div><div class="line"></div><div class="line"><span class="comment">//输出 144</span></div></pre></td></tr></table></figure>]]></content>
+      
+        <categories>
+            
+            <category> php </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> php </tag>
+            
+            <tag> 算法 </tag>
+            
+        </tags>
+        
     </entry>
     
     <entry>
@@ -190,6 +316,24 @@
 <p>Array<br>(<br>    [0] =&gt; 2<br>    [1] =&gt; 6<br>    [2] =&gt; 34<br>    [3] =&gt; 34<br>    [4] =&gt; 223<br>    [5] =&gt; 334<br>    [6] =&gt; 442<br>    [7] =&gt; 949<br>    [8] =&gt; 1123<br>)  </p>
 </blockquote>
 ]]></content>
+      
+        <categories>
+            
+            <category> php </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> php </tag>
+            
+            <tag> 算法 </tag>
+            
+            <tag> 排序 </tag>
+            
+        </tags>
+        
     </entry>
     
     <entry>
@@ -213,6 +357,24 @@
 <p>Array<br>(<br>    [0] =&gt; 2<br>    [1] =&gt; 6<br>    [2] =&gt; 34<br>    [3] =&gt; 34<br>    [4] =&gt; 223<br>    [5] =&gt; 334<br>    [6] =&gt; 442<br>    [7] =&gt; 949<br>    [8] =&gt; 1123<br>)</p>
 </blockquote>
 ]]></content>
+      
+        <categories>
+            
+            <category> php </category>
+            
+        </categories>
+        
+        
+        <tags>
+            
+            <tag> php </tag>
+            
+            <tag> 算法 </tag>
+            
+            <tag> 排序 </tag>
+            
+        </tags>
+        
     </entry>
     
   
